@@ -12,6 +12,8 @@ import random
 import re
 
 TOKEN = ''
+ADMIN_USER_ID = '' 
+
 
 # Products
 PRODUCTS = {
@@ -169,17 +171,15 @@ def complete_order(source, context: CallbackContext, user_id):
     timestamp = datetime.now().strftime("%y%m%d-%H%M%S")
     user_part = str(user_id)[-4:]  # last 4 digits of user ID
     order_no = f"ORD-{timestamp}-{user_part}"
-
     summary = (
         f"Your order has been sent.\n"
         f"Your Order Number is *{order_no}*\n\n"
         f"*PLEASE NOTE:*\n"
         f"1. A dispatch rider will call you to confirm your order, location and delivery charge.\n"
-        f"2. Please send your payment to 024XXXXXXX (Owner) to confirm your order. Items will *NOT* be sent until payment is received\n"
+        f"2. Please send your payment to 024XXXXXXX (Owner) to confirm your order. Items will *NOT* be sent until payment is received.\n"
         f"3. Use your *Order Number* as the *Reference*.\n"
         f"4. Any errors on your part may result in you not receiving your order.\n"
-        f"5. For safety reasons, orders placed after 6pm may not be delivered until the next day.\n"
-        # f"6. Text us on Telegram @ *ELFRENTEROJO* for further enquiries.\n\n"
+        f"5. For safety reasons, orders placed after 6pm may not be delivered until the next day.\n\n"
         f"*️⃣ Order Summary:*\n"
         f"`Contact: {phone}`\n"
         f"`Location: {location.latitude}, {location.longitude}`\n"
@@ -188,6 +188,20 @@ def complete_order(source, context: CallbackContext, user_id):
 
     send(summary, parse_mode='Markdown')
     send("🛒 Your cart has been cleared.\n\nCheckout our products with /start")
+
+    # Send order to the admin
+    admin_message = (
+        f"New Order!\n\n"
+        f"Order Number: *{order_no}*\n"
+        f"Contact: {phone}\n"
+        f"Location: {location.latitude}, {location.longitude}\n"
+        f"Total: GH₵{total}\n\n"
+        f"Order Details:\n"
+        + "\n".join([f"{item['qty']} {item['name']} (GH₵{item['price']})" for item in cart]) + "\n\n"
+        f"Please confirm and fulfill the order."
+    )
+
+    context.bot.send_message(chat_id=ADMIN_USER_ID, text=admin_message, parse_mode='Markdown')
 
     # Reset session
     user_data[user_id] = {'cart': [], 'phone': None, 'location': None}
