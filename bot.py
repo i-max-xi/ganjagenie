@@ -3,6 +3,9 @@ from telegram import (
     KeyboardButton, ReplyKeyboardMarkup
 )
 from datetime import datetime
+from dotenv import load_dotenv
+import os
+
 
 from telegram.ext import (
     Updater, CommandHandler, CallbackQueryHandler,
@@ -11,8 +14,10 @@ from telegram.ext import (
 import random
 import re
 
-TOKEN = ''
-ADMIN_USER_ID = '' 
+load_dotenv()
+TOKEN = os.getenv('TOKEN')
+ADMIN_USER_ID = os.getenv('ADMIN_USER_ID')
+
 
 
 # Products
@@ -38,14 +43,16 @@ user_data = {}
 
 def start(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
-    user_data[user_id] = {'cart': [], 'phone': None, 'location': None}
+
+    # Only reset if user is new
+    if user_id not in user_data:
+        user_data[user_id] = {'cart': [], 'phone': None, 'location': None}
 
     keyboard = [
         [InlineKeyboardButton(cat, callback_data=f"category:{cat}")]
         for cat in PRODUCTS
     ]
 
-    # Handle both message and callback_query types
     if update.message:
         update.message.reply_text(
             "🛍 Welcome! Choose a category:",
@@ -56,6 +63,7 @@ def start(update: Update, context: CallbackContext):
             "🛍 Welcome back! Choose a category:",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
+
 
 
 def handle_callback(update: Update, context: CallbackContext):
@@ -195,13 +203,18 @@ def complete_order(source, context: CallbackContext, user_id):
         f"Order Number: *{order_no}*\n"
         f"Contact: {phone}\n"
         f"Location: {location.latitude}, {location.longitude}\n"
+        f"📍 [Google Maps](https://maps.google.com/?q={location.latitude},{location.longitude})\n"
         f"Total: GH₵{total}\n\n"
         f"Order Details:\n"
         + "\n".join([f"{item['qty']} {item['name']} (GH₵{item['price']})" for item in cart]) + "\n\n"
         f"Please confirm and fulfill the order."
     )
 
+
+
     context.bot.send_message(chat_id=ADMIN_USER_ID, text=admin_message, parse_mode='Markdown')
+    context.bot.send_location(chat_id=ADMIN_USER_ID, latitude=location.latitude, longitude=location.longitude)
+
 
     # Reset session
     user_data[user_id] = {'cart': [], 'phone': None, 'location': None}
