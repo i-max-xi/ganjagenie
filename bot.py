@@ -8,8 +8,9 @@ import os
 
 from telegram.ext import (
     Updater, CommandHandler, CallbackQueryHandler,
-    MessageHandler, Filters, CallbackContext
+    MessageHandler, CallbackContext
 )
+from telegram.ext.filters import Filters  # This line should now be like this.
 import random
 import re
 
@@ -148,6 +149,8 @@ def handle_location(update: Update, context: CallbackContext):
             "✅ Location received. Ready to place your order?",
             reply_markup=InlineKeyboardMarkup(buttons)
         )
+    else:
+     update.message.reply_text("❗ Could not retrieve location. Please try again.")
 
 def complete_order(source, context: CallbackContext, user_id):
     cart = user_data[user_id]['cart']
