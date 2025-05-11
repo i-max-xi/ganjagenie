@@ -10,7 +10,7 @@ from telegram.ext import (
     Updater, CommandHandler, CallbackQueryHandler,
     MessageHandler, CallbackContext
 )
-from telegram.ext.filters import Filters  # This line should now be like this.
+from telegram.ext import Filters
 import random
 import re
 
